@@ -8,12 +8,32 @@
 // Probado contra fotos reales de facturas — ver notas en cada función.
 
 const OCR = (() => {
-  async function recognize(fileOrBlob, onProgress) {
-    const { data } = await Tesseract.recognize(fileOrBlob, "spa", {
-      logger: (m) => {
-        if (onProgress) onProgress(m);
-      },
-    });
+  // Mantiene un solo motor de lectura cargado durante toda la sesión: la primera
+  // foto demora en "prender" el motor (descarga ~10-15MB de diccionario), pero las
+  // siguientes auditorías de la misma visita son bastante más rápidas porque no
+  // hay que volver a cargarlo.
+  let workerPromise = null;
+  let currentProgressCb = null;
+
+  function getWorker() {
+    if (!workerPromise) {
+      workerPromise = Tesseract.createWorker("spa", 1, {
+        logger: (m) => {
+          if (currentProgressCb) currentProgressCb(m);
+        },
+      });
+    }
+    return workerPromise;
+  }
+
+  // Acepta un <canvas> (recomendado: ya recortado y achicado por Cropper, lo que
+  // es la mayor parte de la ganancia de velocidad) o un File/Blob si se saltó el
+  // recorte.
+  async function recognize(imageSource, onProgress) {
+    currentProgressCb = onProgress || null;
+    const worker = await getWorker();
+    const { data } = await worker.recognize(imageSource);
+    currentProgressCb = null;
     return data.text || "";
   }
 
@@ -47,20 +67,41 @@ const OCR = (() => {
         }
       }
 
+      // Más que buscar "razón social" seguido exacto del nombre (frágil: un membrete
+      // con varias columnas hace que el OCR mezcle letras sueltas justo ahí), se toma
+      // todo lo que sigue a "social" y se recorta al tramo en MAYÚSCULAS seguidas, que
+      // es como vienen casi siempre los nombres de empresa/persona en estas facturas.
       if (!header.proveedor) {
-        const m = line.match(/social\s*[:.]?\s*([A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ\s]{3,50}?)\s+(?:orio|CL\d|Hoja|Territorio|\d)/i);
-        if (m) header.proveedor = m[1].trim();
+        const m = line.match(/ocial\s*[:.,]?\s*([A-ZÀ-Ýa-zà-ÿ0-9.,&\s]{3,70})/i);
+        if (m) {
+          const capsRun = m[1].match(/^[A-ZÀ-Ý0-9.,&\s]+/);
+          const candidate = (capsRun ? capsRun[0] : m[1]).trim();
+          if (candidate.length >= 3) header.proveedor = candidate;
+        }
       }
     }
 
-    // El número de factura suele estar cerca de la palabra "FACTURA", pero en facturas
-    // con membrete de varias columnas el OCR puede leer el resto de esa zona bastante
-    // más adelante en el texto — por eso se busca en todo lo que sigue, no solo cerca.
-    const idx = text.search(/factu/i);
-    if (idx >= 0) {
-      const collapsed = collapseDigitSpaces(text.slice(idx));
-      const m = collapsed.match(/n[°ºo]?\.?\s*(\d{6,12})/i);
-      if (m) header.factura = m[1];
+    // El número de factura se busca por su propia marca ("N°", "Nº", "N*" — el OCR
+    // suele leer el símbolo ° como asterisco o como "o") en cualquier parte del texto,
+    // en vez de depender de encontrar la palabra "factura" primero: en un membrete de
+    // varias columnas, esa palabra puede quedar lejos del número o cortada en pedazos
+    // por la lectura en zigzag del OCR, mientras que "N° + número" casi siempre se
+    // mantiene junto porque son dos palabras pegadas en el papel.
+    const collapsedAll = collapseDigitSpaces(text);
+    // Exige una separación real entre la "N" y el número (el símbolo °/º/* o al
+    // menos un espacio) — si no, una palabra que termina en "n" pegada a un número
+    // cualquiera de otra parte del membrete (ruido del OCR) podría confundirse con
+    // la marca de factura.
+    const factMatch = collapsedAll.match(/\bn(?:[°ºo*]\.?\s*|\.?\s+)(\d{7,9})\b/i);
+    if (factMatch) {
+      header.factura = factMatch[1];
+    } else {
+      // Respaldo: el método anterior, por si en otra factura "factura" sí queda pegada.
+      const idx = text.search(/factu/i);
+      if (idx >= 0) {
+        const m = collapseDigitSpaces(text.slice(idx)).match(/n[°ºo]?\.?\s*(\d{6,12})/i);
+        if (m) header.factura = m[1];
+      }
     }
 
     return header;

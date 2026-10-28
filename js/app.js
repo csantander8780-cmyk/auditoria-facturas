@@ -126,6 +126,7 @@
     $("#capture-preview").hidden = true;
     $("#capture-placeholder").hidden = false;
     $("#capture-actions").hidden = true;
+    $("#crop-stage").hidden = true;
     $("#ocr-progress").hidden = true;
     $("#auditoria-form").hidden = true;
     $("#input-foto").value = "";
@@ -147,18 +148,37 @@
 
   $("#btn-retomar").addEventListener("click", resetCapturaScreen);
 
-  $("#btn-skip-ocr").addEventListener("click", () => {
+  function startManual() {
     startAuditFromExtraction({ header: { hojaRuta: "", factura: "", proveedor: "", fecha: "" }, items: [], rawText: "" });
+  }
+  $("#btn-skip-ocr").addEventListener("click", startManual);
+
+  // Paso 1: el usuario confirma la foto → se muestra el recuadro de recorte
+  $("#btn-procesar").addEventListener("click", () => {
+    const img = new Image();
+    img.onload = () => {
+      $("#capture-actions").hidden = true;
+      $("#crop-stage").hidden = false;
+      Cropper.init($("#crop-canvas"), img);
+    };
+    img.onerror = () => {
+      showToast("No se pudo abrir la foto. Intenta tomarla de nuevo.", "warn");
+    };
+    img.src = photoDataUrl;
   });
 
-  $("#btn-procesar").addEventListener("click", async () => {
-    $("#capture-actions").hidden = true;
+  // Paso 2: el usuario ajusta el recuadro y elige qué zona leer
+  $("#btn-usar-recorte").addEventListener("click", () => runOcr(Cropper.getCroppedCanvas()));
+  $("#btn-usar-foto-completa").addEventListener("click", () => runOcr(Cropper.getFullCanvas()));
+
+  async function runOcr(canvasSource) {
+    $("#crop-stage").hidden = true;
     $("#ocr-progress").hidden = false;
     $("#ocr-progress-text").textContent = "Preparando lectura…";
     $("#ocr-progress-bar").style.width = "0%";
 
     try {
-      const text = await OCR.recognize($("#input-foto").files[0], (m) => {
+      const text = await OCR.recognize(canvasSource, (m) => {
         if (m.status === "recognizing text") {
           $("#ocr-progress-text").textContent = "Leyendo la factura…";
           $("#ocr-progress-bar").style.width = Math.round(m.progress * 100) + "%";
@@ -170,9 +190,9 @@
     } catch (err) {
       console.warn("OCR falló", err);
       showToast("No se pudo leer la factura sola. Completa los datos a mano.", "warn");
-      startAuditFromExtraction({ header: { hojaRuta: "", factura: "", proveedor: "", fecha: "" }, items: [], rawText: "" });
+      startManual();
     }
-  });
+  }
 
   function translateStatus(status) {
     const map = {

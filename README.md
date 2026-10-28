@@ -93,15 +93,28 @@ conexión, o apretando "Sincronizar".
 ## Sobre la lectura automática (OCR)
 
 Usa **Tesseract.js**, gratis, corre en el propio celular (no se cobra por imagen ni
-se necesita cuenta). Probado contra una factura real: acertó los 4 campos del
-encabezado y 3 de 5 líneas de ítems completas — las que fallaron fue por una marca
-a lápiz encima de los números y por quedar cortadas en el borde de la foto. Por eso
-todo queda editable antes de pasar al Detalle: la idea es ahorrar tipeo, no
-reemplazar la revisión.
+se necesita cuenta). Después de sacar la foto, aparece un **recuadro de recorte**
+que puedes ajustar arrastrando las esquinas — ahí defines exactamente la zona que
+se va a leer. Esto es clave por dos motivos:
 
-Tip para mejor lectura: encuadra solo la zona del encabezado + tabla de ítems (sin
-el membrete de direcciones de arriba), con buena luz y sin marcas a mano sobre los
-números.
+- **Velocidad**: el OCR demora según la cantidad de píxeles que tiene que analizar.
+  Mientras más ajustado el recuadro a tu encabezado + tabla, más rápida la lectura
+  (y el motor queda "precalentado" después de la primera foto, así que la segunda
+  auditoría de la misma visita es más rápida todavía).
+- **Precisión**: si el recuadro incluye el membrete con direcciones de sucursales
+  (common en facturas chilenas), el OCR mezcla ese texto con los datos reales y la
+  lectura sale peor. Ajustando el recuadro solo a encabezado + tabla, se evita ese
+  ruido.
+
+**Tip**: la primera vez que uses la app con un proveedor, prueba ajustando el
+recuadro bien apretado a la zona de "N° Factura / Hoja de Ruta" y la tabla de
+ítems, sin nada de membrete arriba. Una vez que veas qué recorte funciona mejor
+para el formato de factura de ese proveedor, repite el mismo encuadre cada vez —
+la lectura va a salir mucho más consistente.
+
+Cuando algo no se lee bien, el campo queda **vacío**, nunca con un dato inventado:
+así nunca vas a enviar un número equivocado sin darte cuenta — solo hay que
+completarlo a mano antes de pasar al Detalle.
 
 ## Estructura del proyecto
 

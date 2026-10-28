@@ -254,6 +254,22 @@ img { max-width: 100%; }
 .field-row { display: flex; gap: 10px; }
 .field-row .btn { flex: 1; }
 
+.crop-canvas-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  background: #000;
+  line-height: 0;
+}
+#crop-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: grab;
+}
+
 .ocr-progress {
   display: flex;
   flex-direction: column;

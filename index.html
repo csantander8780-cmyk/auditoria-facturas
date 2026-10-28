@@ -58,7 +58,18 @@
 
     <div id="capture-actions" class="field-row" hidden>
       <button id="btn-retomar" class="btn btn-ghost">Volver a tomar</button>
-      <button id="btn-procesar" class="btn btn-primary">Leer factura →</button>
+      <button id="btn-procesar" class="btn btn-primary">Ajustar y leer →</button>
+    </div>
+
+    <div id="crop-stage" hidden>
+      <p class="muted">Ajusta el recuadro para cubrir el encabezado y la tabla de ítems (arrastra las esquinas). Mientras más ajustado, más rápida y precisa la lectura.</p>
+      <div class="crop-canvas-wrap">
+        <canvas id="crop-canvas"></canvas>
+      </div>
+      <div class="field-row">
+        <button id="btn-usar-foto-completa" class="btn btn-ghost">Usar foto completa</button>
+        <button id="btn-usar-recorte" class="btn btn-primary">Leer esta zona →</button>
+      </div>
     </div>
 
     <div id="ocr-progress" class="ocr-progress" hidden>
@@ -190,6 +201,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/crop.js"></script>
 <script src="js/ocr.js"></script>
 <script src="js/backend.js"></script>
 <script src="js/app.js"></script>
