@@ -1,0 +1,27 @@
+{
+  "id": "m2x1a2b3c",
+  "timestamp": "2026-10-28T15:30:00.000Z",
+  "syncState": "pending",
+  "header": {
+    "hojaRuta": "0014149843",
+    "factura": "43312513",
+    "proveedor": "VERONICA DE LAS MERCEDES CORNEJO",
+    "fecha": "2026-10-13",
+    "auditor": "Claudio Santander",
+    "turno": "Mañana"
+  },
+  "rawText": "texto reconocido de ejemplo",
+  "items": [
+    {
+      "id": "a1b2c3",
+      "codigo": "065900",
+      "descripcion": "DETODITO 64GX21X1",
+      "cantidadFactura": "10",
+      "unidad": "UNID",
+      "estado": "diferencia",
+      "cantidadReal": "8",
+      "sobrante": true,
+      "observacion": "Llegaron 8 en vez de 10, caja venía abierta"
+    }
+  ]
+}
